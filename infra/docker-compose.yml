@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: cashback-postgres
+    environment:
+      POSTGRES_DB: cashback_app
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - cashback-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: cashback-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - cashback-network
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: ../../infra/Dockerfile.api
+    container_name: cashback-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: cashback_app
+      DB_USER: postgres
+      DB_PASSWORD: password
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - cashback-network
+    volumes:
+      - ../apps/api:/app
+      - /app/node_modules
+
+  web-app:
+    build:
+      context: ../apps/web-app
+      dockerfile: ../../infra/Dockerfile.web
+    container_name: cashback-web
+    environment:
+      VITE_API_URL: http://localhost:3000/api
+    ports:
+      - "3001:80"
+    depends_on:
+      - api
+    networks:
+      - cashback-network
+
+volumes:
+  postgres_data:
+
+networks:
+  cashback-network:
+    driver: bridge

@@ -9,7 +9,8 @@
     "start": "node dist/server.js",
     "test": "jest",
     "lint": "eslint src/**/*.ts",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "migrate": "tsx src/migrate.ts"
   },
   "dependencies": {
     "express": "^4.18.0",
